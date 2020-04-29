@@ -22,6 +22,10 @@ SHADE_COLOR = (125,125,125)
 # clock used to update game events & frames
 clock = pygame.time.Clock()
 
+#====================================================
+# this the game class
+# has a method to run the game loop
+# ====================================================
 class Game:
     
     # typical tick rate = 60fps
@@ -46,7 +50,12 @@ class Game:
 
         # used to exit the game loop
         is_game_over = False
+        # specify whether moving up or down the screen
+        direction = 0
 
+        # create a player character
+        player = PlayerObject("img/player.png", 375, 600, 50, 50)
+        
         # main game loop, updates movements, checks, graphics etc
         # runs until is_game_over = True
 
@@ -56,15 +65,30 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     is_game_over = True
-
+                # Detect when a key is pressed down
+                elif event.type == pygame.KEYDOWN:
+                    # if up key was pressed move up screen
+                    if event.key == pygame.K_UP:
+                        direction = 1
+                    # if down key pressed Move down 
+                    elif event.key == pygame.K_DOWN:
+                        direction = -1
+                # Detect when the key is released
+                elif event.type == pygame.KEYUP:
+                    # Stop movement if up or down key is released
+                    if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
+                        direction = 0
+                        
                 print(event)
             
-            # Load the player image from the file directory
-            player_image = pygame.image.load('img/player.png')
-            # Scale the image up as its very small
-            player_image = pygame.transform.scale(player_image, (50, 50))
-            # Draw the player image on top of the screen at (x, y) position
-            self.game_screen.blit(player_image, (375, 375))
+            # update the player position
+            player.move(direction)
+            
+            # redraw the background before redrawing the game objects again
+            self.game_screen.fill(WHITE_COLOR)
+
+            # Draw the player character 
+            player.draw(self.game_screen)
 
             # draw a rect and circle
             pygame.draw.rect(self.game_screen, BLACK_COLOR, [50,50,50,50])
@@ -77,30 +101,58 @@ class Game:
             clock.tick(self.TICK_RATE)
         
 #====================================================
-# this the game object super class
-# other game object will be sub classes of this object
+# this is the game object super class
+# other game objects will be subclasses of this object
 # ====================================================
 class GameObject:
 
     def __init__(self, image_path, x, y, w, h):
 
-        # dont initialise w & h yet as they we will do this when image is loaded
-        self.xpos = x
-        self.ypox = y
-    
         # Load the image from the file directory
         object_image = pygame.image.load(image_path)
         # Scale the image to width & height we want
-        self.image   = pygame.transform.scale(object_image, (w,h))
+        self.image = pygame.transform.scale(object_image, (w, h))         # can use w,h as we havent yet initialised self.width self.height      
 
+        self.xpos   = x
+        self.ypox   = y
+        self.width  = w
+        self.height = h
+    
     def draw(self, background):
         # Draw the player image on top of the screen at (x, y) position
-        self.background.blit(self.image, (self.xpos, self.ypos))
+        background.blit(self.image, (self.xpos, self.ypos))
+        
+#====================================================
+# this is the Player game object class
+# other game objects will be subclasses of this object
+# ====================================================
+class PlayerObject(GameObject):
+
+    # how many tiles the characters moves per second
+    SPEED = 10
+    
+    def __init__(self, image_path, x, y, w, h):
+        super().__init__(image_path, x, y, w, h)
+        
+        self.xpos = x
+        self.ypos = y
+        self.width  = w
+        self.height = h
+    
+    # down the screen an increasing ypos / up the screen is a decreasing ypos
+    # direction -1 is down direction +1 is up 
+    def move(self, direction):
+        # up the screen is a decreasing ypos 
+        if direction > 0:
+            self.ypos -= self.SPEED
+        # down the screen is an increasing ypos
+        elif direction < 0:
+            self.ypos += self.SPEED
         
 #initialise pygame
 pygame.init()
 
-new_game = Game("First Game", 800, 800)
+new_game = Game(SCREEN_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT)
 new_game.run_game_loop()
 
 # quit game when game loop exits
