@@ -76,6 +76,27 @@ class Game:
             # tick the clock to update everything, myst reference self as this belongs to the class now
             clock.tick(self.TICK_RATE)
         
+#====================================================
+# this the game object super class
+# other game object will be sub classes of this object
+# ====================================================
+class GameObject:
+
+    def __init__(self, image_path, x, y, w, h):
+
+        # dont initialise w & h yet as they we will do this when image is loaded
+        self.xpos = x
+        self.ypox = y
+    
+        # Load the image from the file directory
+        object_image = pygame.image.load(image_path)
+        # Scale the image to width & height we want
+        self.image   = pygame.transform.scale(object_image, (w,h))
+
+    def draw(self, background):
+        # Draw the player image on top of the screen at (x, y) position
+        self.background.blit(self.image, (self.xpos, self.ypos))
+        
 #initialise pygame
 pygame.init()
 
