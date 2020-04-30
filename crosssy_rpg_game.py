@@ -55,9 +55,10 @@ class Game:
         # Load the background image from the file directory
         background_image = pygame.image.load(image_path)
         # Scale the image to width & height we want
-        self.image = pygame.transform.scale(background_image, (width, height))     # can use w,h as we havent yet initialised self.width self.height      
-
-    def run_game_loop(self):
+        # can use w,h as we havent yet initialised self.width self.height      
+        self.image = pygame.transform.scale(background_image, (width, height))
+        
+    def run_game_loop(self, level_speed):
 
         # used to exit the game loop
         is_game_over = False
@@ -67,18 +68,47 @@ class Game:
         direction = 0
 
         # create a player character
-        player = PlayerObject("img/player.png", 375, 550, 50, 50)
+        player = PlayerObject("img/player.png", 375, 650, 50, 50)
         
         # create an enemy character
-        enemy = EnemyObject("img/enemy.png", 650, 300, 50, 50)
-
-        # create a treasue object - this is what the player is trying to reach
-        treasure = GameObject('img/treasure.png', 375, 50, 50, 50)
+        enemy = EnemyObject("img/enemy.png", 25, 150, 50, 50)
+        # Speed increased as we advance in difficulty
+        if level_speed <= 6:   
+            enemy.SPEED += level_speed
+            
+        # create an enemy character
+        enemy_1 = EnemyObject("img/enemy-yel.png", 675, 250, 50, 50)
+        # set the enemy speed - increase for each level
+        if level_speed <= 4:   
+            enemy_1.SPEED += level_speed
         
+        # create an enemy character
+        enemy_2 = EnemyObject("img/enemy-red.png", 450, 400, 50, 50)
+        # set the enemy speed - increase for each level
+        if level_speed <= 8:   
+            enemy_2.SPEED += level_speed
+        
+        # create an enemy character
+        enemy_3 = EnemyObject("img/enemy-blu.png", 150, 500, 50, 50)
+        # set the enemy speed - increase for each level
+        if level_speed <= 5:   
+            enemy_3.SPEED += level_speed
+        
+        # create an enemy character
+        enemy_4 = EnemyObject("img/enemy.png", 350, 350, 50, 50)
+        # set the enemy speed - increase for each level
+        if level_speed <= 5:   
+            enemy_4.SPEED += level_speed
+        
+        # create a treasue object - this is what the player is trying to reach
+        treasure = GameObject('img/treasure.png', 375, 5, 50, 50)
+        
+        # ==================================================================================
         # main game loop, updates movements, checks, graphics etc
         # runs until is_game_over = True
-
+        # ==================================================================================
         while not is_game_over:
+
             # get all events occuring at a given time
             # eg mouse clicks, key presses, button clicks
             for event in pygame.event.get():
@@ -98,13 +128,7 @@ class Game:
                     if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                         direction = 0
                         
-            # update the player position, pass the screen height from the game
-            player.move(direction, self.height)
-            
-            # update the enemy position pass in screen width from the game
-            enemy.move(self.width)
-            
-            # redraw the background before redrawing the game objects again
+            # draw the background before redrawing the game objects again
             self.game_screen.fill(WHITE_COLOR)
             # draw the background
             self.game_screen.blit(self.image, (0, 0))
@@ -112,23 +136,30 @@ class Game:
             # Draw the treasure
             treasure.draw(self.game_screen)
 
+            # update the player position, pass the screen height from the game
+            player.move(direction, self.height)
             # Draw the player character 
             player.draw(self.game_screen)
-
-            # Draw the enemy character 
-            enemy.draw(self.game_screen)
-
-            # does player collidie with enemy
-            if player.detect_collision(enemy):
-                is_game_over = True
-                player_wins = False
-                text = font.render("You Lost...Try Again", True, RED_COLOR)
-                self.game_screen.blit(text,(200, 200))
-                pygame.display.update()
-                clock.tick(1)
-                break
+            
+            # creates an array dependant on the level to control number of enemies
+            enemies = [enemy]
+            
+            if level_speed >= 5:   
+                enemies = [enemy, enemy_1, enemy_2, enemy_3, enemy_4]
+            elif level_speed >= 4:   
+                enemies = [enemy, enemy_1, enemy_2, enemy_3]
+            elif level_speed >= 3:   
+                enemies = [enemy, enemy_1, enemy_2]
+            elif level_speed >= 2:   
+                enemies = [enemy, enemy_1]
+            else:   
+                enemies = [enemy]
                 
-            # does player collidie with treasure
+            # move and draw all the enemies in the enemy array - which depends on the level
+            for nmy in enemies:
+                nmy.move(self.width)
+                nmy.draw(self.game_screen)
+
             if player.detect_collision(treasure):
                 is_game_over = True
                 player_wins = True
@@ -136,21 +167,32 @@ class Game:
                 self.game_screen.blit(text,(285, 200))
                 pygame.display.update()
                 clock.tick(1)
-                break
-                
-            # draw a rect and circle
-            pygame.draw.rect(self.game_screen, BLACK_COLOR, [50,50,50,50])
-            pygame.draw.circle(self.game_screen, SHADE_COLOR, [75, 25], 25)
-                
+                break    
+            else:
+                for nmy in enemies:
+                    if player.detect_collision(nmy):
+                        is_game_over = True
+                        player_wins = False
+                        text = font.render("You Lost...Try Again", True, RED_COLOR)
+                        self.game_screen.blit(text,(200, 200))
+                        pygame.display.update()
+                        clock.tick(1)
+                        break
+
             # update game graphics
             pygame.display.update()
 
             # tick the clock to update everything, myst reference self as this belongs to the class now
             clock.tick(self.TICK_RATE)
+
+        # ==================================================================================
+        # end of main game loop
+        # ==================================================================================
         
         # if player wins then run the game loop again
+        # increase the enemy speed
         if player_wins:
-            self.run_game_loop()
+            self.run_game_loop(level_speed + 0.5)
         # if player loses then break out of loop completely
         else:
             return
@@ -183,7 +225,7 @@ class GameObject:
 class PlayerObject(GameObject):
 
     # how many tiles the characters moves per second
-    SPEED = 5
+    SPEED = 10
     
     def __init__(self, image_path, x, y, w, h):
         super().__init__(image_path, x, y, w, h)
@@ -199,7 +241,6 @@ class PlayerObject(GameObject):
         # up the screen is a decreasing ypos 
         if direction > 0 and self.ypos > 5 :
             self.ypos -= self.SPEED
-            print(self.ypos)
         # down the screen is an increasing ypos
         elif direction < 0 and self.ypos < max_height - 50:
             self.ypos += self.SPEED
@@ -208,15 +249,15 @@ class PlayerObject(GameObject):
     # Return False if y positions and x positions do not overlap
     # Return True if x and y positions overlap
     def detect_collision(self, other_body):
+        # use floor operator to be a bit less stringent of when an oeverlap causes a collision
+        if self.ypos > other_body.ypos + (other_body.height // 3):
+            return False
+        elif self.ypos + (self.height // 3) < other_body.ypos:
+            return False
 
-        if self.ypos > other_body.ypos + other_body.height:
+        if self.xpos > other_body.xpos + (other_body.width // 3):
             return False
-        elif self.ypos + self.height < other_body.ypos:
-            return False
-
-        if self.xpos > other_body.xpos + other_body.width:
-            return False
-        elif self.xpos + self.width < other_body.xpos:
+        elif self.xpos + (self.width // 3) < other_body.xpos:
             return False
 
         # so if all collision checks fail there is an overlap
@@ -248,11 +289,16 @@ class EnemyObject(GameObject):
 
         self.xpos += self.SPEED
 
+#====================================================
+# Start the game 
+# ====================================================
+
 #initialise pygame
 pygame.init()
 
 new_game = Game("img/background.png", SCREEN_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT)
-new_game.run_game_loop()
+# pass in 1 as the multiplier for the enemy speed
+new_game.run_game_loop(1)
 
 # quit game when game loop exits
 pygame.quit()

@@ -52,7 +52,7 @@ print(new_pos)
 mod_x_pos = x_pos % 2       # mod_x_pos = 1
 
 # floor operator // is opposite of modulus
-floor_div_pos = x_pos ?? 2   # floor_div_xpos = 2
+floor_div_pos = x_pos // 2   # floor_div_xpos = 2
 
 # conditional: > >= < <= != ==
 
