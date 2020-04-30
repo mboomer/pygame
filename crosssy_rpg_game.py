@@ -9,7 +9,7 @@ import pygame
 # set screen size & title
 SCREEN_TITLE = "Crossing Game"
 SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 800
+SCREEN_HEIGHT = 700
 
 #colours RGB codes in tuples
 WHITE_COLOR = (255,255,255)
@@ -50,11 +50,17 @@ class Game:
 
         # used to exit the game loop
         is_game_over = False
-        # specify whether moving up or down the screen
+        # local variable - specify whether moving up or down the screen
         direction = 0
 
         # create a player character
-        player = PlayerObject("img/player.png", 375, 600, 50, 50)
+        player = PlayerObject("img/player.png", 375, 550, 50, 50)
+        
+        # create an enemy character
+        enemy = EnemyObject("img/enemy.png", 650, 300, 50, 50)
+
+        # create a treasue object - this is what the player is trying to reach
+        treasure = GameObject('img/treasure.png', 375, 50, 50, 50)
         
         # main game loop, updates movements, checks, graphics etc
         # runs until is_game_over = True
@@ -79,16 +85,23 @@ class Game:
                     if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
                         direction = 0
                         
-                print(event)
+            # update the player position, pass the screen height from the game
+            player.move(direction, self.height)
             
-            # update the player position
-            player.move(direction)
+            # update the enemy position pass in screen width from the game
+            enemy.move(self.width)
             
             # redraw the background before redrawing the game objects again
             self.game_screen.fill(WHITE_COLOR)
 
             # Draw the player character 
             player.draw(self.game_screen)
+
+            # Draw the enemy character 
+            enemy.draw(self.game_screen)
+
+            # Draw the treasure
+            treasure.draw(self.game_screen)
 
             # draw a rect and circle
             pygame.draw.rect(self.game_screen, BLACK_COLOR, [50,50,50,50])
@@ -114,7 +127,7 @@ class GameObject:
         self.image = pygame.transform.scale(object_image, (w, h))         # can use w,h as we havent yet initialised self.width self.height      
 
         self.xpos   = x
-        self.ypox   = y
+        self.ypos   = y
         self.width  = w
         self.height = h
     
@@ -124,12 +137,11 @@ class GameObject:
         
 #====================================================
 # this is the Player game object class
-# other game objects will be subclasses of this object
 # ====================================================
 class PlayerObject(GameObject):
 
     # how many tiles the characters moves per second
-    SPEED = 10
+    SPEED = 5
     
     def __init__(self, image_path, x, y, w, h):
         super().__init__(image_path, x, y, w, h)
@@ -141,14 +153,58 @@ class PlayerObject(GameObject):
     
     # down the screen an increasing ypos / up the screen is a decreasing ypos
     # direction -1 is down direction +1 is up 
-    def move(self, direction):
+    def move(self, direction, max_height):
         # up the screen is a decreasing ypos 
-        if direction > 0:
+        if direction > 0 and self.ypos > 5 :
             self.ypos -= self.SPEED
+            print(self.ypos)
         # down the screen is an increasing ypos
-        elif direction < 0:
+        elif direction < 0 and self.ypos < max_height - 50:
             self.ypos += self.SPEED
+            print(self.ypos)
+
+    # Return False (no collision) if y positions and x positions do not overlap
+    # Return True if x and y positions overlap
+    def detect_collision(self, other_body):
+
+        if self.ypos > other_body.ypos + other_body.height:
+            return False
+        elif self.ypos + self.height < other_body.ypos:
+            return False
+
+        if self.xpos > other_body.x_pos + other_body.width:
+            return False
+        elif self.xpos + self.width < other_body.xpos:
+            return False
+
+        return True
         
+#====================================================
+# this is the Enemy game object class
+# ====================================================
+class EnemyObject(GameObject):
+
+    # how many tiles the characters moves per second
+    SPEED = 5
+    
+    def __init__(self, image_path, x, y, w, h):
+        super().__init__(image_path, x, y, w, h)
+        
+        self.xpos = x
+        self.ypos = y
+        self.width  = w
+        self.height = h
+    
+    # left - an increasing xpos / right - a decreasing xpos
+    # pass in width of screen from Game object so we know our right boundary
+    def move(self, max_width):
+        if self.xpos <= 5:
+            self.SPEED = abs(self.SPEED)
+        elif self.xpos >= max_width - 50:
+            self.SPEED = -abs(self.SPEED)
+
+        self.xpos += self.SPEED
+
 #initialise pygame
 pygame.init()
 
