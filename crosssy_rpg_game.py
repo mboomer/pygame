@@ -94,14 +94,22 @@ class Game:
             # redraw the background before redrawing the game objects again
             self.game_screen.fill(WHITE_COLOR)
 
+            # Draw the treasure
+            treasure.draw(self.game_screen)
+
             # Draw the player character 
             player.draw(self.game_screen)
 
             # Draw the enemy character 
             enemy.draw(self.game_screen)
 
-            # Draw the treasure
-            treasure.draw(self.game_screen)
+            # does player collidie with enemy
+            if player.detect_collision(enemy):
+                is_game_over = True
+
+            # does player collidie with treasure
+            if player.detect_collision(treasure):
+                is_game_over = True
 
             # draw a rect and circle
             pygame.draw.rect(self.game_screen, BLACK_COLOR, [50,50,50,50])
@@ -161,9 +169,9 @@ class PlayerObject(GameObject):
         # down the screen is an increasing ypos
         elif direction < 0 and self.ypos < max_height - 50:
             self.ypos += self.SPEED
-            print(self.ypos)
 
-    # Return False (no collision) if y positions and x positions do not overlap
+    # if player ypos is above enemy ypos or below enemy ypos then no chance of a collision
+    # Return False if y positions and x positions do not overlap
     # Return True if x and y positions overlap
     def detect_collision(self, other_body):
 
@@ -172,11 +180,12 @@ class PlayerObject(GameObject):
         elif self.ypos + self.height < other_body.ypos:
             return False
 
-        if self.xpos > other_body.x_pos + other_body.width:
+        if self.xpos > other_body.xpos + other_body.width:
             return False
         elif self.xpos + self.width < other_body.xpos:
             return False
 
+        # so if all collision checks fail there is an overlap
         return True
         
 #====================================================
