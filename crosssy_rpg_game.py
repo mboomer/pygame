@@ -5,6 +5,9 @@
 # access the pygame libraries
 import pygame
 
+# initial the font
+pygame.font.init()
+
 
 # set screen size & title
 SCREEN_TITLE = "Crossing Game"
@@ -22,6 +25,9 @@ SHADE_COLOR = (125,125,125)
 # clock used to update game events & frames
 clock = pygame.time.Clock()
 
+# choose a specific font
+font = pygame.font.SysFont("comicsans", 75)
+
 #====================================================
 # this the game class
 # has a method to run the game loop
@@ -31,7 +37,7 @@ class Game:
     # typical tick rate = 60fps
     TICK_RATE = 60
 
-    def __init__(self, title, width, height):
+    def __init__(self, image_path, title, width, height):
     
         self.title  = title
         self.width  = width
@@ -46,10 +52,17 @@ class Game:
         # set title for game screen
         pygame.display.set_caption(title)
 
+        # Load the background image from the file directory
+        background_image = pygame.image.load(image_path)
+        # Scale the image to width & height we want
+        self.image = pygame.transform.scale(background_image, (width, height))     # can use w,h as we havent yet initialised self.width self.height      
+
     def run_game_loop(self):
 
         # used to exit the game loop
         is_game_over = False
+        player_wins = False
+        
         # local variable - specify whether moving up or down the screen
         direction = 0
 
@@ -71,7 +84,7 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     is_game_over = True
-                # Detect when a key is pressed down
+                    # Detect when a key is pressed down
                 elif event.type == pygame.KEYDOWN:
                     # if up key was pressed move up screen
                     if event.key == pygame.K_UP:
@@ -93,7 +106,9 @@ class Game:
             
             # redraw the background before redrawing the game objects again
             self.game_screen.fill(WHITE_COLOR)
-
+            # draw the background
+            self.game_screen.blit(self.image, (0, 0))
+                
             # Draw the treasure
             treasure.draw(self.game_screen)
 
@@ -106,11 +121,23 @@ class Game:
             # does player collidie with enemy
             if player.detect_collision(enemy):
                 is_game_over = True
-
+                player_wins = False
+                text = font.render("You Lost...Try Again", True, RED_COLOR)
+                self.game_screen.blit(text,(200, 200))
+                pygame.display.update()
+                clock.tick(1)
+                break
+                
             # does player collidie with treasure
             if player.detect_collision(treasure):
                 is_game_over = True
-
+                player_wins = True
+                text = font.render("You Won", True, RED_COLOR)
+                self.game_screen.blit(text,(285, 200))
+                pygame.display.update()
+                clock.tick(1)
+                break
+                
             # draw a rect and circle
             pygame.draw.rect(self.game_screen, BLACK_COLOR, [50,50,50,50])
             pygame.draw.circle(self.game_screen, SHADE_COLOR, [75, 25], 25)
@@ -120,6 +147,13 @@ class Game:
 
             # tick the clock to update everything, myst reference self as this belongs to the class now
             clock.tick(self.TICK_RATE)
+        
+        # if player wins then run the game loop again
+        if player_wins:
+            self.run_game_loop()
+        # if player loses then break out of loop completely
+        else:
+            return
         
 #====================================================
 # this is the game object super class
@@ -217,7 +251,7 @@ class EnemyObject(GameObject):
 #initialise pygame
 pygame.init()
 
-new_game = Game(SCREEN_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT)
+new_game = Game("img/background.png", SCREEN_TITLE, SCREEN_WIDTH, SCREEN_HEIGHT)
 new_game.run_game_loop()
 
 # quit game when game loop exits
